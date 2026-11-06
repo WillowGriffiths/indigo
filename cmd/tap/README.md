@@ -50,6 +50,7 @@ Tips:
 - **Set `--no-replay`**: Always connect to the firehose head on restart instead of replaying from a stale cursor. Repos that fell behind will resync when their next firehose event arrives. This flag is incompatible with `--full-network` and is not recommended for production.
 - **Don't use `--full-network`**: Full network mode tracks every repo on the network and takes days to backfill. Instead, add specific DIDs with `/repos/add`.
 - **Use `--disable-acks` until you setup webhooks or event acks**: Use a simple WebSocket client like `websocat` to inspect events.
+- **Routing handle resolution**: By default Tap resolves handles directly via DNS TXT records and `/.well-known/atproto-did`. In a dev environment you may instead want all handle resolution to go through a service (eg, a local `bluepages` instance, or a mock) implementing the `com.atproto.identity.resolveHandle` XRPC endpoint. Point Tap at it with `--handle-resolve-url` (or `TAP_HANDLE_RESOLVE_URL`). DID resolution (PLC/`did:web`) is unaffected, and local policy checks like reserved TLDs are bypassed so dev domains (eg, `alice.local`) work.
 
 ## HTTP API
 
@@ -75,6 +76,7 @@ Environment variables or CLI flags:
 - `TAP_MAX_DB_CONNS`: maximum number of database connections (default: `32`)
 - `TAP_BIND`: HTTP server address (default: `:2480`)
 - `TAP_PLC_URL`: PLC directory HTTP/HTTPS URL (default: `https://plc.directory`)
+- `TAP_HANDLE_RESOLVE_URL`: base URL of a service implementing the `com.atproto.identity.resolveHandle` XRPC endpoint (eg, `http://localhost:6600`). When set, **all** handle resolution is routed through this service instead of local DNS/well-known resolution. Intended for dev environments (default: unset, resolve handles directly)
 - `TAP_RELAY_URL`: AT Protocol relay HTTP/HTTPS URL (default: `https://relay1.us-east.bsky.network`)
 - `TAP_FIREHOSE_PARALLELISM`: concurrent firehose event processors (default: `10`)
 - `TAP_RESYNC_PARALLELISM`: concurrent resync workers (default: `5`)

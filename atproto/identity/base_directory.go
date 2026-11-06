@@ -29,6 +29,19 @@ type BaseDirectory struct {
 	SkipDNSDomainSuffixes []string
 	// set of fallback DNS servers (eg, domain registrars) to try as a fallback. each entry should be "ip:port", eg "8.8.8.8:53"
 	FallbackDNSServers []string
+	// If non-nil, all handle resolution (`ResolveHandle`, and the handle
+	// verification step of `LookupHandle`/`LookupDID`) will be delegated to this
+	// resolver instead of doing local DNS TXT or HTTP well-known resolution.
+	//
+	// This can be used to route all handle resolution through a remote service
+	// implementing the `com.atproto.identity.resolveHandle` XRPC endpoint. For
+	// example, in a development environment where handles are managed by a local
+	// mock or shared identity service.
+	//
+	// Note that when set, local policy checks (eg, the reserved-TLD check in
+	// `ResolveHandle`) are bypassed, and the configured resolver is fully
+	// responsible for validating and resolving the handle.
+	HandleResolver HandleResolver
 	// skips bi-directional verification of handles when doing DID lookups (eg, `LookupDID`). Does not impact direct resolution (`ResolveHandle`) or handle-specific lookup (`LookupHandle`).
 	//
 	// The intended use-case for this flag is as an optimization for services which do not care about handles, but still want to use the `Directory` interface (instead of `ResolveDID`). For example, relay implementations, or services validating inter-service auth requests.

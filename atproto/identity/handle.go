@@ -183,6 +183,15 @@ func (d *BaseDirectory) ResolveHandle(ctx context.Context, handle syntax.Handle)
 		return "", fmt.Errorf("can not resolve handle: %w", ErrInvalidHandle)
 	}
 
+	// if a custom handle resolver is configured, route all handle resolution
+	// through it (eg, a remote service implementing the
+	// `com.atproto.identity.resolveHandle` XRPC endpoint), instead of doing
+	// local DNS or HTTP well-known resolution. Note that this also bypasses the
+	// reserved-TLD check below, so that development handle domains can be used.
+	if d.HandleResolver != nil {
+		return d.HandleResolver.ResolveHandle(ctx, handle)
+	}
+
 	if !handle.AllowedTLD() {
 		return "", ErrHandleReservedTLD
 	}

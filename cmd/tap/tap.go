@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bluesky-social/indigo/atproto/identity"
+	"github.com/bluesky-social/indigo/atproto/identity/apidir"
 	"github.com/bluesky-social/indigo/cmd/tap/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -52,6 +53,10 @@ type TapConfig struct {
 	OutboxOnly                 bool
 	AdminPassword              string
 	RetryTimeout               time.Duration
+	// If set, all handle resolution is routed through a service implementing the
+	// `com.atproto.identity.resolveHandle` XRPC endpoint (eg, a local bluepages
+	// or mock in a dev environment). DID resolution is unaffected.
+	HandleResolveURL string
 }
 
 func NewTap(config TapConfig) (*Tap, error) {
@@ -64,6 +69,13 @@ func NewTap(config TapConfig) (*Tap, error) {
 		PLCURL:                config.PLCURL,
 		TryAuthoritativeDNS:   false,
 		SkipDNSDomainSuffixes: []string{".bsky.social"},
+	}
+	if config.HandleResolveURL != "" {
+		// route all handle resolution through a dedicated service implementing
+		// the `com.atproto.identity.resolveHandle` XRPC endpoint (eg, a local
+		// mock in a dev environment). DID resolution still uses PLC/did:web.
+		bdir.HandleResolver = apidir.NewAPIDirectory(config.HandleResolveURL)
+		slog.Default().Info("routing handle resolution through remote service", "url", config.HandleResolveURL)
 	}
 	cdir := identity.NewCacheDirectory(&bdir, config.IdentityCacheSize, time.Hour*24, time.Minute*2, time.Minute*5)
 

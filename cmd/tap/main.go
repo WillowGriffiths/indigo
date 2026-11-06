@@ -76,6 +76,11 @@ func run(args []string) error {
 						Value:   "https://relay1.us-east.bsky.network",
 						Sources: cli.EnvVars("TAP_RELAY_URL"),
 					},
+					&cli.StringFlag{
+						Name:    "handle-resolve-url",
+						Usage:   "route all handle resolution through a service implementing com.atproto.identity.resolveHandle at this base URL (eg, http://localhost:6600); intended for dev environments",
+						Sources: cli.EnvVars("TAP_HANDLE_RESOLVE_URL"),
+					},
 					&cli.IntFlag{
 						Name:    "firehose-parallelism",
 						Usage:   "number of parallel firehose event processors",
@@ -200,6 +205,12 @@ func runTap(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("plc-url must start with http:// or https://")
 	}
 
+	// optional handle resolution service (dev environments); fail early if not http/https
+	handleResolveUrl := strings.TrimRight(cmd.String("handle-resolve-url"), "/")
+	if handleResolveUrl != "" && !strings.HasPrefix(handleResolveUrl, "http://") && !strings.HasPrefix(handleResolveUrl, "https://") {
+		return fmt.Errorf("handle-resolve-url must start with http:// or https://")
+	}
+
 	if cmd.Bool("no-replay") && cmd.Bool("full-network") {
 		return fmt.Errorf("--no-replay cannot be used with --full-network")
 	}
@@ -225,6 +236,7 @@ func runTap(ctx context.Context, cmd *cli.Command) error {
 		OutboxOnly:                 cmd.Bool("outbox-only"),
 		AdminPassword:              cmd.String("admin-password"),
 		RetryTimeout:               cmd.Duration("retry-timeout"),
+		HandleResolveURL:           handleResolveUrl,
 	}
 
 	logger.Info("creating tap service")
