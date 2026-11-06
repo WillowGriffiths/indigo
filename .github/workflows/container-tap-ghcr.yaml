@@ -10,7 +10,7 @@ env:
 
 jobs:
   container-tap-ghcr:
-    if: github.repository == 'bluesky-social/indigo'
+    if: github.repository == 'WillowGriffiths/indigo'
     runs-on: ubuntu-latest
     permissions:
       contents: read
